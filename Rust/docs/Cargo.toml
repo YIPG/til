@@ -17,5 +17,9 @@ name = "struct"
 path = "src/struct.rs"
 
 [[bin]]
+name = "pattern-match"
+path = "src/pattern_match.rs"
+
+[[bin]]
 name = "main"
 path = "src/main.rs"
