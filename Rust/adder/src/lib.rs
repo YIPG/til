@@ -2,22 +2,10 @@
 mod tests {
     use super::*;
 
-    #[test]
-    fn explanation() {
-        assert_eq!(2 + 2, 4);
-    }
 
     #[test]
-    fn another() {
-        panic!("Failed")
-    }
-
-    #[test]
-    fn larger_can_hold_smaller() {
-        let larger = Rectangle { length: 8, width: 7 };
-        let smaller = Rectangle { length: 5, width: 1 };
-
-        assert!(larger.can_hold(&smaller));
+    fn internal() {
+        assert_eq!(4, internal_adder(2, 2));
     }
 }
 
@@ -31,4 +19,12 @@ impl Rectangle {
     pub fn can_hold(&self, other: &Rectangle) -> bool {
         self.length > other.length && self.width > other.width
     }
+}
+
+pub fn add_two(a: i32) -> i32 {
+    internal_adder(a, 2)
+}
+
+fn internal_adder(a: i32, b: i32) -> i32 {
+    a + b
 }
