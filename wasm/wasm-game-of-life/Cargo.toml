@@ -1,5 +1,5 @@
 [package]
-name = "wasm-game-of-life"
+name = "wasm-game-of-life-yipg"
 version = "0.1.0"
 authors = ["yipg <around.mr.child@gmail.com>"]
 edition = "2018"
@@ -38,3 +38,4 @@ features = [
 [profile.release]
 # Tell `rustc` to optimize for small code size.
 opt-level = "s"
+lto = true
