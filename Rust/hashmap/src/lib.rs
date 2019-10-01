@@ -4,19 +4,21 @@ use std::hash::{Hasher, Hash};
 const INITIAL_NBUCKETS:usize = 1;
 
 
-pub struct HashhMap<K, V> {
-    buckets: Vec<Vec<(K, V)>>
+pub struct HashMap<K, V> {
+    buckets: Vec<Vec<(K, V)>>,
+     items: usize
 }
 
-impl<K, V> HashhMap<K, V> {
+impl<K, V> HashMap<K, V> {
     pub fn new() -> Self {
-        HashhMap {
+        HashMap {
             buckets: Vec::new(),
+            items: 0
         }
     }
 }
 
-impl<K, V> HashhMap<K, V>
+impl<K, V> HashMap<K, V>
 where
     K: Hash + Eq
  {
@@ -45,6 +47,14 @@ where
 
         // TODO
     }
+}
 
+#[cfg(test)]
+mod tests {
+    use super::*;
 
+    fn insert() {
+        let mut map = HashMap::new();
+        map.insert("foo", 43);
+    }
 }
