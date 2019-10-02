@@ -1,3 +1,4 @@
+use std::borrow::Borrow;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 use std::mem;
@@ -22,7 +23,11 @@ impl<K, V> HashMap<K, V>
 where
     K: Hash + Eq,
 {
-    fn bucket(&self, key: &K) -> usize {
+    fn bucket<Q>(&self, key: &Q) -> usize
+    where
+        K: Borrow<Q>,
+        Q: Hash + Eq + ?Sized,
+    {
         let mut hasher = DefaultHasher::new();
         key.hash(&mut hasher);
         (hasher.finish() % self.buckets.len() as u64) as usize
@@ -47,7 +52,11 @@ where
         None
     }
 
-    pub fn get(&self, key: &K) -> Option<&V> {
+    pub fn get<Q>(&self, key: &Q) -> Option<&V>
+    where
+        K: Borrow<Q>,
+        Q: Hash + Eq + ?Sized,
+    {
         let bucket = self.bucket(key);
 
         // 命令的
@@ -62,18 +71,28 @@ where
         // 関数的
         self.buckets[bucket]
             .iter()
-            .find(|&(ref ekey, _)| ekey == key)
+            .find(|&(ref ekey, _)| ekey.borrow() == key)
             .map(|&(_, ref v)| v)
     }
 
-    pub fn contains_key(&self, key: &K) -> bool {
+    pub fn contains_key<Q>(&self, key: &Q) -> bool
+    where
+        K: Borrow<Q>,
+        Q: Hash + Eq + ?Sized,
+    {
         self.get(key).is_some()
     }
 
-    pub fn remove(&mut self, key: &K) -> Option<V> {
+    pub fn remove<Q>(&mut self, key: &Q) -> Option<V>
+    where
+        K: Borrow<Q>,
+        Q: Hash + Eq + ?Sized,
+    {
         let bucket = self.bucket(key);
         let bucket = &mut self.buckets[bucket];
-        let i = bucket.iter().position(|&(ref ekey, _)| ekey == key)?;
+        let i = bucket
+            .iter()
+            .position(|&(ref ekey, _)| ekey.borrow() == key)?;
         self.items -= 1;
         Some(bucket.swap_remove(i).1)
     }
@@ -107,21 +126,46 @@ where
     }
 }
 
-pub struct Iter<'a, K, V> {}
-
-impl<'a, K, V> Iter<'a, K, V> {
-    fn new(&'a HashMap<K,V>) -> Self {}
+pub struct Iter<'a, K: 'a, V: 'a> {
+    map: &'a HashMap<K, V>,
+    bucket: usize,
+    at: usize,
 }
 
 impl<'a, K, V> Iterator for Iter<'a, K, V> {
     type Item = (&'a K, &'a V);
-    fn next(&mut self) -> Option<Self::Item> {}
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            match self.map.buckets.get(self.bucket) {
+                Some(bucket) => {
+                    match bucket.get(self.at) {
+                        Some(&(ref k, ref v)) => {
+                            // move along self.at and self.bucket
+                            self.at += 1;
+                            break Some((k, v));
+                        }
+                        None => {
+                            self.bucket += 1;
+                            self.at = 0;
+                            continue;
+                        }
+                    }
+                }
+                None => break None,
+            }
+        }
+    }
 }
 
 impl<'a, K, V> IntoIterator for &'a HashMap<K, V> {
-    
-    fn into_iter(self) -> {
-
+    type Item = (&'a K, &'a V);
+    type IntoIter = Iter<'a, K, V>;
+    fn into_iter(self) -> Self::IntoIter {
+        Iter {
+            map: self,
+            bucket: 0,
+            at: 0,
+        }
     }
 }
 
@@ -142,5 +186,24 @@ mod tests {
         assert_eq!(map.len(), 0);
         assert!(map.is_empty());
         assert_eq!(map.get(&"foo"), None);
+    }
+
+    #[test]
+    fn iter() {
+        let mut map = HashMap::new();
+        map.insert("foo", 43);
+        map.insert("bar", 42);
+        map.insert("baz", 144);
+        map.insert("quox", 6);
+        for (&k, &v) in &map {
+            match k {
+                "foo" => assert_eq!(v, 43),
+                "bar" => assert_eq!(v, 42),
+                "baz" => assert_eq!(v, 144),
+                "quox" => assert_eq!(v, 6),
+                _ => unreachable!(),
+            }
+        }
+        assert_eq!((&map).into_iter().count(), 4);
     }
 }

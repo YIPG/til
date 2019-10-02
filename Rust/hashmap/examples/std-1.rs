@@ -46,8 +46,14 @@ fn main() {
     }
   }
 
-  // Look up the value for a key (will panic if the key is not found).
-  println!("Review for Jane: {}", book_reviews["Pride and Prejudice"]);
+  // look up the values associated with some keys.
+  let to_find = ["Pride and Prejudice", "Alice's Adventure in Wonderland"];
+  for book in &to_find {
+    match book_reviews.get::<str>(book) {
+      Some(review) => println!("{}: {}", book, review),
+      None => println!("{} is unreviewed.", book),
+    }
+  }
 
   // Iterate over everything.
   for (book, review) in &book_reviews {
