@@ -50,6 +50,7 @@ where
     pub fn get(&self, key: &K) -> Option<&V> {
         let bucket = self.bucket(key);
 
+        // 命令的
         // for &(ref ekey, ref eval) in &self.buckets[bucket] {
         //     if ekey == key {
         //         return Some(eval);
@@ -58,10 +59,31 @@ where
 
         // return None;
 
+        // 関数的
         self.buckets[bucket]
             .iter()
             .find(|&(ref ekey, _)| ekey == key)
             .map(|&(_, ref v)| v)
+    }
+
+    pub fn contains_key(&self, key: &K) -> bool {
+        self.get(key).is_some()
+    }
+
+    pub fn remove(&mut self, key: &K) -> Option<V> {
+        let bucket = self.bucket(key);
+        let bucket = &mut self.buckets[bucket];
+        let i = bucket.iter().position(|&(ref ekey, _)| ekey == key)?;
+        self.items -= 1;
+        Some(bucket.swap_remove(i).1)
+    }
+
+    pub fn len(&self) -> usize {
+        self.items
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.items == 0
     }
 
     fn resize(&mut self) {
@@ -85,6 +107,24 @@ where
     }
 }
 
+pub struct Iter<'a, K, V> {}
+
+impl<'a, K, V> Iter<'a, K, V> {
+    fn new(&'a HashMap<K,V>) -> Self {}
+}
+
+impl<'a, K, V> Iterator for Iter<'a, K, V> {
+    type Item = (&'a K, &'a V);
+    fn next(&mut self) -> Option<Self::Item> {}
+}
+
+impl<'a, K, V> IntoIterator for &'a HashMap<K, V> {
+    
+    fn into_iter(self) -> {
+
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -92,7 +132,15 @@ mod tests {
     #[test]
     fn insert() {
         let mut map = HashMap::new();
+        assert_eq!(map.len(), 0);
+        assert!(map.is_empty());
         map.insert("foo", 43);
+        assert_eq!(map.len(), 1);
+        assert!(!map.is_empty());
         assert_eq!(map.get(&"foo"), Some(&43));
+        assert_eq!(map.remove(&"foo"), Some(43));
+        assert_eq!(map.len(), 0);
+        assert!(map.is_empty());
+        assert_eq!(map.get(&"foo"), None);
     }
 }
