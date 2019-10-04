@@ -11,7 +11,7 @@ pub struct HashMap<K, V> {
 }
 
 pub struct OccupiedEntry<'a, K, V> {
-    element: &'a mut (K, V),
+    entry: &'a mut (K, V),
 }
 
 pub struct VacantEntry<'a, K, V> {
@@ -34,20 +34,30 @@ pub enum Entry<'a, K, V> {
 impl<'a, K, V> Entry<'a, K, V> {
     pub fn or_insert(self, value: V) -> &'a mut V {
         match self {
-            Entry::Occupied(e) => &mut e.element.1,
+            Entry::Occupied(e) => &mut e.entry.1,
             Entry::Vacant(e) => e.insert(value),
         }
     }
 
-    // pub fn or_insert_with(self, maker: F) -> &'a mut V
-    // where
-    //     F: FnOnce() -> V,
-    // {
-    //     match self {
-    //         Entry::Occupied(e) => &mut e.element.1,
-    //         Entry::Vacant(e) => e.insert(maker()),
-    //     }
-    // }
+    pub fn or_insert_with<F>(self, maker: F) -> &'a mut V
+    where
+        F: FnOnce() -> V,
+    {
+        match self {
+            Entry::Occupied(e) => &mut e.entry.1,
+            Entry::Vacant(e) => e.insert(maker()),
+        }
+    }
+
+    pub fn or_default(self) -> &'a mut V
+    where
+        V: Default,
+    {
+        match self {
+            Entry::Occupied(e) => &mut e.entry.1,
+            Entry::Vacant(e) => e.insert(V::default()),
+        }
+    }
 }
 
 impl<K, V> HashMap<K, V> {
@@ -74,7 +84,16 @@ where
     }
 
     pub fn entry(&mut self, key: K) -> Entry<K, V> {
-        // TODO
+        let bucket = self.bucket(&key);
+        let bucket = &mut self.buckets[bucket];
+
+        match bucket
+            .iter_mut()
+            .find(|&(ref ekey, _)| ekey.borrow() == &key)
+        {
+            Some(entry) => Entry::Occupied(OccupiedEntry { entry }),
+            None => Entry::Vacant(VacantEntry { key, bucket }),
+        }
     }
 
     pub fn insert(&mut self, key: K, value: V) -> Option<V> {
