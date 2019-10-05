@@ -14,15 +14,19 @@ pub struct OccupiedEntry<'a, K, V> {
     entry: &'a mut (K, V),
 }
 
-pub struct VacantEntry<'a, K, V> {
+pub struct VacantEntry<'a, K: 'a, V: 'a> {
     key: K,
-    bucket: &'a mut Vec<(K, V)>,
+    map: &'a mut HashMap<K, V>,
+    bucket: usize,
 }
-
 impl<'a, K, V> VacantEntry<'a, K, V> {
-    pub fn insert(self, value: V) -> &'a mut V {
-        self.bucket.push((self.key, value));
-        &mut self.bucket.last_mut().unwrap().1
+    pub fn insert(self, value: V) -> &'a mut V
+    where
+        K: Hash + Eq,
+    {
+        self.map.buckets[self.bucket].push((self.key, value));
+        self.map.items += 1;
+        &mut self.map.buckets[self.bucket].last_mut().unwrap().1
     }
 }
 
@@ -31,7 +35,10 @@ pub enum Entry<'a, K, V> {
     Vacant(VacantEntry<'a, K, V>),
 }
 
-impl<'a, K, V> Entry<'a, K, V> {
+impl<'a, K, V> Entry<'a, K, V>
+where
+    K: Hash + Eq,
+{
     pub fn or_insert(self, value: V) -> &'a mut V {
         match self {
             Entry::Occupied(e) => &mut e.entry.1,
@@ -83,16 +90,24 @@ where
         (hasher.finish() % self.buckets.len() as u64) as usize
     }
 
-    pub fn entry(&mut self, key: K) -> Entry<K, V> {
-        let bucket = self.bucket(&key);
-        let bucket = &mut self.buckets[bucket];
+    pub fn entry<'a>(&'a mut self, key: K) -> Entry<'a, K, V> {
+        if self.buckets.is_empty() || self.items > 3 * self.buckets.len() / 4 {
+            self.resize();
+        }
 
-        match bucket
-            .iter_mut()
-            .find(|&(ref ekey, _)| ekey.borrow() == &key)
+        let bucket = self.bucket(&key);
+        match self.buckets[bucket]
+            .iter()
+            .position(|&(ref ekey, _)| ekey == &key)
         {
-            Some(entry) => Entry::Occupied(OccupiedEntry { entry }),
-            None => Entry::Vacant(VacantEntry { key, bucket }),
+            Some(index) => Entry::Occupied(OccupiedEntry {
+                entry: &mut self.buckets[bucket][index],
+            }),
+            None => Entry::Vacant(VacantEntry {
+                map: self,
+                key,
+                bucket,
+            }),
         }
     }
 
