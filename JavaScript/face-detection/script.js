@@ -21,10 +21,12 @@ video.addEventListener("play", () => {
   const displaySize = { width: video.width, height: video.height };
   faceapi.matchDimensions(canvas, displaySize);
   setInterval(async () => {
-    const detections = await faceapi
-      .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
-      .withFaceLandmarks()
-      .withFaceExpressions();
+    const detections = await faceapi.detectAllFaces(
+      video,
+      new faceapi.TinyFaceDetectorOptions()
+    );
+    // .withFaceLandmarks()
+    // .withFaceExpressions();
     // console.log(detections);
     // console.log(displaySize);
     const resizedDetections = faceapi.resizeResults(detections, displaySize);
