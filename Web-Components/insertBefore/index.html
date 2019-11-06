@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <title>Gecko DOM insertBefore test</title>
+  </head>
+
+  <body>
+    <div>
+      <span id="childSpan">foo bar</span>
+    </div>
+
+    <script>
+      // IDや属性、内容のない空の要素ノードを作成します。
+      var sp1 = document.createElement("span");
+
+      // 作成した要素に 'newSpan' というID属性を与えます。
+      sp1.setAttribute("id", "newSpan");
+
+      // 作成した要素のために適当な内容を作成します。
+      var sp1_content = document.createTextNode("This is a new span element. ");
+
+      // その内容を作成した要素に適用します。
+      sp1.appendChild(sp1_content);
+
+      var sp2 = document.getElementById("childSpan");
+      var parentDiv = sp2.parentNode;
+
+      // 新しい要素をDOMに sp2 の前に追加します。
+      parentDiv.insertBefore(sp1, sp2);
+    </script>
+  </body>
+</html>
