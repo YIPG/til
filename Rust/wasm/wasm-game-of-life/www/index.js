@@ -1,7 +1,6 @@
-import * as wasm from "hello-wasm-pack"
 import { Universe, Cell } from "wasm-game-of-life"
 // Import the WebAssembly memory at the top of the file.
-import { memory } from "wasm-game-of-life/wasm_game_of_life_bg"
+import { memory } from "wasm-game-of-life/wasm_game_of_life_yipg_bg"
 
 const CELL_SIZE = 5 // px
 const GRID_COLOR = "#CCCCCC"

@@ -1,10 +1,10 @@
 [package]
-name = "tcp_from_scratch"
+name = "hello-rocket"
 version = "0.1.0"
-authors = ["YIPG <around.mr.child@gmail.com>"]
+authors = ["yipg <around.mr.child@gmail.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-"tun-tap-mac" = "0.1.2"
+rocket = "0.4.2"
